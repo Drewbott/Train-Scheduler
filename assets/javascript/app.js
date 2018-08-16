@@ -15,10 +15,12 @@ var database = firebase.database()
 
 var trainName;
 var destination;
-var frequency;
+var tFrequency;
 var nextArrival;
 var minutesAway;
 
+
+    
 
 // submit on click 
   // add new employee
@@ -28,16 +30,40 @@ var minutesAway;
     // Get the input values
     trainName = $("#trainName").val().trim();
     destination = $("#destination").val().trim();
-    firstTime = $("#firstTime").val().trim();
-    frequency = parseInt($("#frequency").val().trim())
+    var firstTime = $("#firstTime").val().trim();
+    var tFrequency = parseInt($("#frequency").val().trim());
 
+// First Time (pushed back 1 year to make sure it comes before current time)
+var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
+console.log(firstTimeConverted);
 
+// Current Time
+var currentTime = moment();
+console.log("CURRENT TIME: " + moment(currentTime).format("HH:mm"));
+
+// Difference between the times
+var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+console.log("DIFFERENCE IN TIME: " + diffTime);
+
+// Time apart (remainder)
+var tRemainder = diffTime % tFrequency;
+console.log(tRemainder);
+
+// Minute Until Train
+var tMinutesTillTrain = tFrequency - tRemainder;
+console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+
+// Next Train
+var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+console.log("ARRIVAL TIME: " + moment(nextTrain).format("HH:mm"));
 
     database.ref().push({
         trainName: trainName,
         destination: destination,
         firstTime: firstTime,
-        frequency: frequency,
+        tFrequency: tFrequency,
+        tMinutesTillTrain: tMinutesTillTrain,
+        nextTrain: nextTrain,
         dateAdded: firebase.database.ServerValue.TIMESTAMP
 
     });
@@ -55,14 +81,14 @@ database.ref().on("child_added", function(event) {
   tdName.text(event.val().trainName)
   var tdDest = $("<td>")
   tdDest.text(event.val().destination)
-  var tdStart = $("<td>")
-  tdStart.text(event.val().firstTime)
-//   var tdWorked = $("<td>")
-//   tdWorked.text(event.val().monthsWorked) 
-//   var tdRate = $("<td>")
-//   tdRate.text(event.val().monthlyRate)
+  var tdFreq = $("<td>")
+  tdFreq.text(event.val().tFrequency)
+  var tdNext = $("<td>")
+  tdNext.text(event.val().nextTrain) 
+  var tdMinutesAway = $("<td>")
+  tdMinutesAway.text(event.val().tMinutesTillTrain)
 //   var tdBilled = $("<td>")
 //   tdBilled.text(event.val().totalBilled)
-  newRow.append(tdName, tdDest, tdStart)
+  newRow.append(tdName, tdDest, tdFreq, tdNext, tdMinutesAway)
   $("tbody").append(newRow)
 })
