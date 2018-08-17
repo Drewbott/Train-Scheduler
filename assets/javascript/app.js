@@ -13,12 +13,6 @@
 
 var database = firebase.database()
 
-var trainName;
-var destination;
-var tFrequency;
-var nextArrival;
-var minutesAway;
-
 
     
 
@@ -26,18 +20,64 @@ var minutesAway;
   // add new employee
   $("#submit").on("click", function(event) {
     event.preventDefault();
+
   
     // Get the input values
-    trainName = $("#trainName").val().trim();
-    destination = $("#destination").val().trim();
+   var trainName = $("#trainName").val().trim();
+    var destination = $("#destination").val().trim();
     var firstTime = $("#firstTime").val().trim();
-    var tFrequency = parseInt($("#frequency").val().trim());
+    var tFrequency = $("#frequency").val().trim();
 
-// First Time (pushed back 1 year to make sure it comes before current time)
-var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
+// // First Time (pushed back 1 year to make sure it comes before current time)
+// var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
+// console.log(firstTimeConverted);
+
+// // Current Time
+// var currentTime = moment();
+// console.log("CURRENT TIME: " + moment(currentTime).format("HH:mm"));
+
+// // Difference between the times
+// var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+// console.log("DIFFERENCE IN TIME: " + diffTime);
+
+// // Time apart (remainder)
+// var tRemainder = diffTime % tFrequency;
+// console.log(tRemainder);
+
+// // Minute Until Train
+// var tMinutesTillTrain = tFrequency - tRemainder;
+// console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
+
+// // Next Train
+// var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+// console.log("ARRIVAL TIME: " + moment(nextTrain).format("HH:mm"));
+
+    database.ref().push({
+        trainName: trainName,
+        destination: destination,
+        firstTime: firstTime,
+        tFrequency: tFrequency,
+        dateAdded: firebase.database.ServerValue.TIMESTAMP
+
+    });
+    $("#trainName").val("");
+    $("#destination").val("");
+    $("#firstTime").val("");
+    $("#frequency").val("");
+    alert("Train successfully added !")
+  });
+  
+
+// on child added
+  // populate table rows
+
+database.ref().on("child_added", function(event) {
+//  First Time (pushed back 1 year to make sure it comes before current time)
+var firstTrain = event.val().firstTime
+var firstTimeConverted = moment(firstTrain, "HH:mm").subtract(1, "years");
 console.log(firstTimeConverted);
 
-// Current Time
+ // Current Time
 var currentTime = moment();
 console.log("CURRENT TIME: " + moment(currentTime).format("HH:mm"));
 
@@ -46,35 +86,19 @@ var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
 console.log("DIFFERENCE IN TIME: " + diffTime);
 
 // Time apart (remainder)
-var tRemainder = diffTime % tFrequency;
+var tTimeApart = event.val().tFrequency
+var tRemainder = diffTime % tTimeApart;
 console.log(tRemainder);
 
 // Minute Until Train
-var tMinutesTillTrain = tFrequency - tRemainder;
+var tMinutesTillTrain = tTimeApart - tRemainder;
 console.log("MINUTES TILL TRAIN: " + tMinutesTillTrain);
 
 // Next Train
-var nextTrain = moment().add(tMinutesTillTrain, "minutes");
-console.log("ARRIVAL TIME: " + moment(nextTrain).format("HH:mm"));
+var nextTrain = moment().add(tMinutesTillTrain, "minutes").format("HH:mm");
 
-    database.ref().push({
-        trainName: trainName,
-        destination: destination,
-        firstTime: firstTime,
-        tFrequency: tFrequency,
-        tMinutesTillTrain: tMinutesTillTrain,
-        nextTrain: nextTrain,
-        dateAdded: firebase.database.ServerValue.TIMESTAMP
+console.log(nextTrain)
 
-    });
-
-  });
-  
-
-// on child added
-  // populate table rows
-
-database.ref().on("child_added", function(event) {
   var newRow = $("<tr>")
   // Columns in Current Employees Div
   var tdName = $("<td>")
@@ -84,9 +108,9 @@ database.ref().on("child_added", function(event) {
   var tdFreq = $("<td>")
   tdFreq.text(event.val().tFrequency)
   var tdNext = $("<td>")
-  tdNext.text(event.val().nextTrain) 
+  tdNext.text(nextTrain)
   var tdMinutesAway = $("<td>")
-  tdMinutesAway.text(event.val().tMinutesTillTrain)
+  tdMinutesAway.text(tMinutesTillTrain)
 //   var tdBilled = $("<td>")
 //   tdBilled.text(event.val().totalBilled)
   newRow.append(tdName, tdDest, tdFreq, tdNext, tdMinutesAway)
